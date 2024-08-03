@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>نتيجة الثانوية العامة</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.0/xlsx.full.min.js"></script>
+    <style>
+        body {
+            background-color: #f8f9fa;
+            font-family: 'Arial', sans-serif;
+        }
+
+        h1 {
+            color: #007bff;
+        }
+
+        .search-box {
+            max-width: 500px;
+            margin: auto;
+        }
+
+        #result {
+            margin-top: 20px;
+            font-size: 1.2em;
+        }
+    </style>
+</head>
+<body>
+    <div class="container text-center mt-5">
+        <h1>نتيجة الثانوية العامة</h1>
+        <div class="search-box mt-4">
+            <input type="text" id="search-input" class="form-control" placeholder="ابحث بالاسم أو رقم الجلوس">
+            <button onclick="searchResult()" class="btn btn-primary mt-3">بحث</button>
+        </div>
+        <div id="result" class="mt-5"></div>
+    </div>
+
+    <script>
+        let results = [];
+
+        window.onload = function() {
+            fetch('results.xlsx')
+                .then(response => response.arrayBuffer())
+                .then(data => {
+                    const workbook = XLSX.read(data, {type: 'array'});
+                    const firstSheetName = workbook.SheetNames[0];
+                    const worksheet = workbook.Sheets[firstSheetName];
+                    const jsonData = XLSX.utils.sheet_to_json(worksheet, {header: 1});
+                    parseData(jsonData);
+                });
+        };
+
+        function parseData(data) {
+            results = data.slice(1).map(row => ({
+                name: row[0],
+                roll: row[1],
+                grade: row[2]
+            }));
+        }
+
+        function searchResult() {
+            const searchInput = document.getElementById('search-input').value.toLowerCase();
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = '';
+
+            const filteredResults = results.filter(student =>
+                student.name.toLowerCase().includes(searchInput) || student.roll.toString().includes(searchInput)
+            );
+
+            if (filteredResults.length > 0) {
+                filteredResults.forEach(student => {
+                    resultDiv.innerHTML += `<p>الاسم: ${student.name} | رقم الجلوس: ${student.roll} | الدرجة: ${student.grade}</p>`;
+                });
+            } else {
+                resultDiv.innerHTML = '<p>لم يتم العثور على نتائج.</p>';
+            }
+        }
+    </script>
+</body>
+</html>
