@@ -1,59 +1,25 @@
-# توجيه البيانات إلى بوت Telegram
-function Send-TelegramMessage {
-    param (
-        [string]$botToken,
-        [string]$chatId,
-        [string]$message
-    )
-    $url = "https://api.telegram.org/bot$botToken/sendMessage"
-    $body = @{
-        chat_id = $chatId
-        text    = $message
-    }
-    Invoke-RestMethod -Uri $url -Method Post -Body $body
-}
+name: RDP Setup
 
-# وظيفة لإنشاء اسم مستخدم عشوائي
-function Generate-RandomUsername {
-    $chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
-    $username = -join ((1..8 | ForEach-Object { $chars[(Get-Random -Maximum $chars.Length)] }))
-    return $username
-}
+on:
+  push:
+    branches:
+      - main
 
-# وظيفة لإنشاء كلمة مرور عشوائية
-function Generate-RandomPassword {
-    $chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()"
-    $password = -join ((1..12 | ForEach-Object { $chars[(Get-Random -Maximum $chars.Length)] }))
-    return $password
-}
+jobs:
+  setup-rdp:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
 
-# توليد بيانات تسجيل الدخول
-$UserName = Generate-RandomUsername
-$Password = Generate-RandomPassword
+      - name: Set up PowerShell
+        uses: microsoft/setup-powershell@v2
+        with:
+          version: '7.x' # اختر الإصدار المناسب
 
-# تعيين كلمة مرور للمستخدم
-$SecurePassword = ConvertTo-SecureString $Password -AsPlainText -Force
-$UserCredential = New-Object System.Management.Automation.PSCredential ($UserName, $SecurePassword)
-
-# إنشاء المستخدم وإضافته إلى مجموعة Remote Desktop Users
-net user $UserName $Password /add
-net localgroup "Remote Desktop Users" $UserName /add
-
-# تمكين الوصول عن بُعد
-Enable-NetFirewallRule -DisplayGroup "Remote Desktop"
-
-# الحصول على عنوان IP المحلي
-$IPAddress = (Get-NetIPAddress -AddressFamily IPv4 | Where-Object { $_.IPAddress -ne "127.0.0.1" }).IPAddress
-
-# إعداد معلومات بوت Telegram
-$botToken = "7047714100:AAHptINe1QLjomnzqKaOMnTm_YRmt5T5XAM" # استبدل بـ bot token الخاص بك
-$chatId = "242676339"     # استبدل بـ chat ID الخاص بك
-
-# إعداد الرسالة
-$message = "تم إعداد خادم RDP بنجاح.`nعنوان IP: $IPAddress`nاسم المستخدم: $UserName`nكلمة المرور: $Password"
-
-# إرسال الرسالة عبر Telegram
-Send-TelegramMessage -botToken $botToken -chatId $chatId -message $message
-
-# عرض رسالة نجاح
-Write-Host "تم إرسال بيانات RDP إلى Telegram."
+      - name: Run RDP setup script
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: |
+          pwsh .\setup-rdp.ps1
