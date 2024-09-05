@@ -19,7 +19,7 @@ jobs:
 
       - name: Run RDP setup script
         env:
-          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
-          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          7047714100:AAHptINe1QLjomnzqKaOMnTm_YRmt5T5XAM: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          242676339: ${{ secrets.TELEGRAM_CHAT_ID }}
         run: |
           pwsh .\setup-rdp.ps1
